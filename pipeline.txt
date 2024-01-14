@@ -1,0 +1,43 @@
+pipeline {
+    agent none
+    environment{
+        DOCKERHUB_CREDENTIALS=credentials('here u input docker cres id from jenkins')
+    }
+    stages {
+        stage('Hello') {
+            steps {
+                echo 'Hello World'
+            }
+        }
+		stage('Git') {
+            agent {
+                label 'kmaster'
+            }
+			steps {
+                git 'https://github.com/kishanchand11/capstone-second.git'
+            }
+        }
+		stage('docker') {
+            agent {
+                label 'kmaster'
+            }
+			steps {
+        sh 'sudo docker build /home/ubuntu/workspace/testpipeline -t kishanchand/capstone-second'
+				sh 'sudo echo $DOCKERHUB_CREDENTIALS_PSW | sudo docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+				sh 'sudo docker push kishanchand/capstone-second'
+            }
+        }
+		stage('k8s') {
+            agent {
+                label 'kmaster'
+            }
+			steps {
+        sh 'kubectl apply -f deployment.yaml'
+				sh 'kubectl apply -f service.yaml'
+            }
+        }
+    }
+}
+
+
+# here in stage k8s another command needsds to be added for deleting the exisitng deployed repo 'sh 'kubectl delete deploy deployment-name'
